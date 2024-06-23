@@ -1,1 +1,23 @@
+Folder.py
 
+Functionality : It saves the reconstructed image in a specified folder
+
+Line 66 : Load the Model
+Line 70 : Specify the Input Directory where Original Images are stored
+Line 71 : Specify the Output Directory where Reconstructed Images should be stored
+
+----------------------------------------------------------------------------------------------
+
+Insertion.py
+
+Functionality : It creates a sqlite database with Original Images
+
+Line 28 : Specify the Folder Path in which Original Images are located
+
+-----------------------------------------------------------------------------------------------
+
+Matching.py
+
+Functionality : Given a query image it checks with the database and displays the Matched Image
+
+Line 42 : Specify the query image path
