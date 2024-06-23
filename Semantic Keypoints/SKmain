@@ -111,7 +111,7 @@ def form_corpus(input_folder, output_folder):
             corpus.append(s)
 
 # Example usage
-input_folder = '/assets/'
+input_folder = '/assets/images'
 output_folder = '/assets/output_folder'
 
 # Train the KMeans model
