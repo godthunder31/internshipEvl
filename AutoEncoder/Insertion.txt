@@ -1,9 +1,0 @@
-File Name : Insertion.py
-
-Functionality : It creates a sqlite database with Original Images
-
-Requirements :
-Libraries Required : opencv, sqlalchemy, pickle, numpy, scipy
-
-Instructions : 
-Line 28 : Specify the Folder Path in which Original Images are located
