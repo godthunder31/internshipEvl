@@ -1,1 +1,1 @@
-
+Libraries Needed : cv2(opencv-python), sqlalchemy(SQLAlchemy), numpy, scipy, matplotlib, PyTorch(torch), torchvision, Pillow.
