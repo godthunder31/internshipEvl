@@ -60,7 +60,7 @@ class ImageLoader(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='ALike Demo.')
-    parser.add_argument('input', type=str, default='/scratch/inscriptions/images',
+    parser.add_argument('input', type=str, default='/assets/images',
                         help='Image directory or movie file or "camera0" (for webcam0).')
     parser.add_argument('--model', choices=['alike-t', 'alike-s', 'alike-n', 'alike-l'], default="alike-l",
                         help="The model configuration")
@@ -71,7 +71,7 @@ if __name__ == '__main__':
                         help='Detector score threshold (default: 0.2).')
     parser.add_argument('--n_limit', type=int, default=5000,
                         help='Maximum number of keypoints to be detected (default: 5000).')
-    parser.add_argument('--output_dir', type=str, default='/scratch/inscriptions/output_images',
+    parser.add_argument('--output_dir', type=str, default='/assets/output_images',
                         help='Directory to save the output images (default: output_images).')
     args = parser.parse_args()
 
