@@ -1,9 +1,0 @@
-File Name : Matching.py
-
-Functionality : Given a query image it checks with the database and displays the Matched Image
-
-Requirements :
-Libraries Required : opencv, sqlalchemy, pickle, numpy, scipy
-
-Instructions : 
-Line 42 : Specify the query image path
