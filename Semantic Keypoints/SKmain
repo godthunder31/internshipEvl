@@ -1,1 +1,129 @@
+import os
+import numpy as np
+from PIL import Image
+from sklearn.cluster import KMeans
+import joblib  # For saving and loading the trained model
+
+# Define the global KMeans model and corpus
+kmeans = KMeans(n_clusters=10, random_state=42)  # Adjust n_clusters as needed
+corpus = []
+predicted_clusters = []
+
+def split_image(input_folder, output_folder):
+    os.makedirs(output_folder, exist_ok=True)
+    tiles_list = []
+
+    for filename in os.listdir(input_folder):
+        if filename.endswith(".jpg") or filename.endswith(".png") or filename.endswith(".jpeg"):
+            img_path = os.path.join(input_folder, filename)
+            image = Image.open(img_path)
+            img_width, img_height = image.size
+            tile_width = img_width // 10
+            tile_height = img_height // 10
+
+            for i in range(10):
+                for j in range(10):
+                    left = j * tile_width
+                    upper = i * tile_height
+                    right = min((j + 1) * tile_width, img_width)
+                    lower = min((i + 1) * tile_height, img_height)
+
+                    tile = image.crop((left, upper, right, lower))
+                    tile = tile.resize((30, 30))
+                    tiles_list.append(tile)
+                    tile_filename = f"{filename}_tile_{i}_{j}.png"
+                    tile_path = os.path.join(output_folder, tile_filename)
+                    tile.save(tile_path)
+    
+    return tiles_list
+
+def train_kmeans(input_folder, n_clusters=10):
+    global kmeans
+
+    # Initialize a list to store the flattened tile data
+    tile_data = []
+
+    for filename in os.listdir(input_folder):
+        if filename.endswith(".jpg") or filename.endswith(".png") or filename.endswith(".jpeg"):
+            img_path = os.path.join(input_folder, filename)
+            image = Image.open(img_path)
+            img_width, img_height = image.size
+            tile_width = img_width // 10
+            tile_height = img_height // 10
+
+            for i in range(10):
+                for j in range(10):
+                    left = j * tile_width
+                    upper = i * tile_height
+                    right = min((j + 1) * tile_width, img_width)
+                    lower = min((i + 1) * tile_height, img_height)
+
+                    tile = image.crop((left, upper, right, lower))
+                    tile = tile.resize((30, 30))
+                    tile_array = np.array(tile).reshape(-1)  # Flatten the image array
+                    tile_data.append(tile_array)
+    
+    # Convert tile data to a numpy array
+    tile_data = np.array(tile_data)
+    
+    # Train the KMeans model
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    kmeans.fit(tile_data)
+    
+    # Save the trained model
+    joblib.dump(kmeans, 'kmeans_model.pkl')
+
+def image_sentence(input_folder, output_folder):
+    global kmeans
+    global predicted_clusters
+
+    # Split images into tiles and get the list of tiles
+    chunk_list = split_image(input_folder, output_folder)
+    
+    # Initialize the cluster ID list
+    cluster_id_list = []
+
+    for chunk in chunk_list:
+        # Convert the image chunk to numpy array
+        chunk_array = np.array(chunk).reshape(-1)  # Flatten the image array
+        
+        # Get the cluster ID for the chunk
+        c = kmeans.predict([chunk_array])[0]
+        
+        # Append the cluster ID to the list
+        cluster_id_list.append(c)
+    
+    # Form the sentence from the cluster IDs
+    sentence = "C ".join([str(c) for c in cluster_id_list])
+    
+    # Store predicted clusters globally
+    predicted_clusters = cluster_id_list
+    
+    return sentence
+
+def form_corpus(input_folder, output_folder):
+    global corpus
+    for filename in os.listdir(input_folder):
+        if filename.endswith(".jpg") or filename.endswith(".png") or filename.endswith(".jpeg"):
+            # Generate the sentence for the image
+            s = image_sentence(input_folder, output_folder)
+            # Append the sentence to the corpus
+            corpus.append(s)
+
+# Example usage
+input_folder = '/Users/apple/Downloads/IITT'
+output_folder = '/Users/apple/Downloads/IMG'
+
+# Train the KMeans model
+train_kmeans(input_folder, n_clusters=10)
+
+# Load the trained KMeans model
+kmeans = joblib.load('kmeans_model.pkl')
+
+# Generate the corpus
+form_corpus(input_folder, output_folder)
+
+# Access and print the global variables
+print("Predicted clusters:", predicted_clusters)
+print("Corpus:", corpus)
 
