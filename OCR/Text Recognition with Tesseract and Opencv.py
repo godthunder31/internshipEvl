@@ -59,6 +59,6 @@ def process_image(image_path):
 
 
 if __name__ == '__main__':
-    image_path = "C:/Dataset FDS/temp/inscriptionimages/testimage.jpg"  # Update this with the path to your image
+    image_path = "/assets/ocrimage.jpg"  # Update this with the path to your image
     text = process_image(image_path)
     print('OCR Text:', text)
