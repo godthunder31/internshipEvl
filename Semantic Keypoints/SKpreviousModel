@@ -129,7 +129,7 @@ def map_keypoints_to_original_images(input_folder, patches_folder, output_folder
             cv2.imwrite(output_path, img)
 
 # Folder paths (update with actual paths)
-input_folder = "/assets/"
+input_folder = "/assets/images"
 patches_folder = "/assets/patches"
 output_folder_kp = "/assets/output_folder"
 
