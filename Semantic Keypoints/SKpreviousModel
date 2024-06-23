@@ -129,9 +129,9 @@ def map_keypoints_to_original_images(input_folder, patches_folder, output_folder
             cv2.imwrite(output_path, img)
 
 # Folder paths (update with actual paths)
-input_folder = "/Users/apple/Downloads/send"
-patches_folder = "/Users/apple/Downloads/OutP2"
-output_folder_kp = "/Users/apple/Downloads/KP"
+input_folder = "/assets/"
+patches_folder = "/assets/patches"
+output_folder_kp = "/assets/output_folder"
 
 # Process
 slice_and_resize_images(input_folder, patches_folder)
