@@ -1,0 +1,11 @@
+File Name : Folder.py
+
+Functionality : It saves the reconstructed image in a specified folder
+
+Requirements :
+Libraries Required : torch, torchvision, pillow, numpy
+
+Instructions : 
+Line 66 : Load the Model
+Line 70 : Specify the Input Directory where Original Images are stored
+Line 71 : Specify the Output Directory where Reconstructed Images should be stored
