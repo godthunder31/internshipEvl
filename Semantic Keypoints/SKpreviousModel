@@ -1,0 +1,142 @@
+import os 
+from PIL import Image
+import numpy as np
+from sklearn.cluster import KMeans
+import cv2
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+def clear_folder(folder_path):
+    if os.path.exists(folder_path):
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+
+def slice_and_resize_images(input_folder, output_folder, patch_size=(30, 30)):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    else:
+        clear_folder(output_folder)
+
+    valid_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.JPEG')
+    images = [f for f in os.listdir(input_folder) if f.lower().endswith(valid_extensions) and os.path.isfile(os.path.join(input_folder, f))]
+    patch_count = 0
+    
+    for img_name in images:
+        img_path = os.path.join(input_folder, img_name)
+        img = Image.open(img_path)
+        img_width, img_height = img.size
+        patch_width, patch_height = img_width // 10, img_height // 10
+        
+        for i in range(10):
+            for j in range(10):
+                left = i * patch_width
+                upper = j * patch_height 
+                right = left + patch_width
+                lower = upper + patch_height
+                
+                patch = img.crop((left, upper, right, lower)) 
+                patch = patch.resize(patch_size, Image.LANCZOS)
+                
+                patch_name = f"{i}_{j}_{img_name}"
+                patch.save(os.path.join(output_folder, patch_name))
+                patch_count += 1
+
+def load_patches(patches_folder):
+    patches = []
+    valid_patch_names = []
+    
+    for patch_name in os.listdir(patches_folder):
+        parts = patch_name.split('_')
+        if len(parts) >= 3 and parts[0].isdigit() and parts[1].isdigit():
+            valid_patch_names.append(patch_name)
+    
+    valid_patch_names = sorted(valid_patch_names)
+    
+    for patch_name in valid_patch_names:
+        patch_path = os.path.join(patches_folder, patch_name)
+        patch = cv2.imread(patch_path, cv2.IMREAD_GRAYSCALE)
+        patches.append(patch.flatten())
+        
+    return np.array(patches), valid_patch_names
+
+def apply_kmeans(patches, k=2000):
+    kmeans = KMeans(n_clusters=k, random_state=0).fit(patches)
+    return kmeans.labels_, kmeans.cluster_centers_
+
+def create_corpus(labels):
+    return ['C' + str(label) for label in labels]
+
+def calculate_tfidf(corpus):
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform(corpus)
+    feature_names = vectorizer.get_feature_names_out()
+    scores = tfidf_matrix.sum(axis=0).A1
+    tfidf_scores = dict(zip(feature_names, scores))
+    return tfidf_scores
+
+def mark_keypoints_on_image(image, keypoints):
+    for kp in keypoints:
+        cv2.circle(image, (int(kp[0]), int(kp[1])), 5, (255, 0, 0), -1)  # Larger and blue key points
+    return image
+
+def map_keypoints_to_original_images(input_folder, patches_folder, output_folder, kmeans_labels, tfidf_scores):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    else:
+        clear_folder(output_folder)
+    
+    valid_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.JPEG')
+    images = [f for f in os.listdir(input_folder) if f.lower().endswith(valid_extensions) and os.path.isfile(os.path.join(input_folder, f))]
+    
+    patches, valid_patch_names = load_patches(patches_folder)
+    
+    global_label_counts = {label: 0 for label in set(kmeans_labels)}
+    for label in kmeans_labels:
+        global_label_counts[label] += 1
+    
+    for img_name in images:
+        img_path = os.path.join(input_folder, img_name)
+        img = cv2.imread(img_path)
+        img_height, img_width, _ = img.shape
+        patch_width, patch_height = img_width // 10, img_height // 10
+
+        img_label_counts = {label: 0 for label in set(kmeans_labels)}
+        img_keypoints = []
+        for i in range(10):
+            for j in range(10):
+                patch_name = f"{i}_{j}_{img_name}"
+                if patch_name in valid_patch_names:
+                    patch_idx = valid_patch_names.index(patch_name)
+                    label = kmeans_labels[patch_idx]
+                    tfidf_key = 'C' + str(label)
+                    tfidf_score = tfidf_scores.get(tfidf_key, float('inf'))  # Default to a high score if not found
+                    img_keypoints.append((tfidf_score, i, j, label))
+                    img_label_counts[label] += 1
+
+        img_keypoints.sort(key=lambda x: (x[0], global_label_counts[x[3]], img_label_counts[x[3]]))  # Sort by TF-IDF, global count, local count
+        img_keypoints = img_keypoints[:10]  # Select 10 tiles with lowest TF-IDF scores and counts
+
+        keypoints_coords = []
+        for _, i, j, _ in img_keypoints:
+            centroid_x = (j * patch_width) + (patch_width // 2) 
+            centroid_y = (i * patch_height) + (patch_height // 2)
+            keypoints_coords.append((centroid_x, centroid_y))
+
+        if keypoints_coords:
+            img = mark_keypoints_on_image(img, keypoints_coords)
+            output_path = os.path.join(output_folder, img_name)
+            cv2.imwrite(output_path, img)
+
+# Folder paths (update with actual paths)
+input_folder = "/Users/apple/Downloads/send"
+patches_folder = "/Users/apple/Downloads/OutP2"
+output_folder_kp = "/Users/apple/Downloads/KP"
+
+# Process
+slice_and_resize_images(input_folder, patches_folder)
+patches, valid_patch_names = load_patches(patches_folder)
+kmeans_labels, _ = apply_kmeans(patches)
+corpus = create_corpus(kmeans_labels)
+tfidf_scores = calculate_tfidf(corpus)
+map_keypoints_to_original_images(input_folder, patches_folder, output_folder_kp, kmeans_labels, tfidf_scores)
