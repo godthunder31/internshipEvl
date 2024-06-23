@@ -32,7 +32,7 @@ def correct_skew(image, delta=1, limit=5):
     return best_angle, rotated
 #reading the original image using OpenCV
 
-image = cv2.imread("C:/Dataset FDS/temp/inscriptionimages/51.jpg")
+image = cv2.imread("/assets/ocrimage.jpeg")
 
 #Converting the colored image to greyscale
 angle, rotated = correct_skew(image)
