@@ -5,7 +5,7 @@ import pytesseract
 pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
 
 # Load the image
-img = cv2.imread("C:/Dataset FDS/temp/inscriptionimages/testimage.jpg")
+img = cv2.imread("/assets/ocrimage.jpg")
 
 # Convert the image to grayscale
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
